@@ -59,20 +59,54 @@ To run the examples in this repository, you'll need:
    ```bash
    git clone https://github.com/AeonJh/DesignPattern-cpp.git
    cd DesignPattern-cpp
+
+   # set current directory as `PROJECT_ROOT`
+   export PROJECT_ROOT=$PWD
    ```
 
-2. Navigate to each individual Design Patterns folder, then:
+2. Pull and update submodule (boost & gtest): (This might take some time)
    ```bash
-   cmake -B build -S .
+   git submodule update --init --recursive
    ```
 
-3. Build the project:
+3. Compile and install libraries (boost & gtest): (recommended)
    ```bash
+   # boost
+   cd external/boost
+   ./bootstrap.sh --prefix=build
+   ./b2 install
+
+   # return to project directory
+   cd ..
+
+   # gtest
+   cd external/gtest
+   # only compile googletest, no gmock
+   cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=on \
+         -DCMAKE_BUILD_TYPE=Debug \
+         -DBUILD_GMOCK=OFF \
+         -B build -S .
    cmake --build build
+   cmake --install build --strip --prefix build
    ```
 
-4. Run the compiled examples:
-   Each pattern's executable is located in the `build/bin` directory. (e.g., `./build/bin/person`)
+5. For needed Design Pattern examples, export the dependency include path and libraries path: (optional)
+   ```bash
+   export BOOST_ROOT=$PROJECT_ROOT/external/boost/build
+   export BOOST_LIB=$PROJECT_ROOT/external/boost/build/lib
+   export GTEST_INC=$PROJECT_ROOT/external/gtest/build/include
+   export GTEST_LIB=$PROJECT_ROOT/external/gtest/build/lib
+   ```
+
+5. Navigate to each individual Design Patterns folder, build and run it, e.g.:
+   ```bash
+   cd Singleton
+   cmake -B build -S .
+   cmake --build build
+
+   # Each pattern's executable is located in the `build/bin` directory.
+   ./build/bin/database
+   ```
 
 ## License
 This repository is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.

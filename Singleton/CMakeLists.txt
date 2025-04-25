@@ -11,19 +11,16 @@ project(
 )
 
 #------------------------------------------------------------------------------
-# Boost configuration
+# gtest configuration
 #------------------------------------------------------------------------------
-if(NOT DEFINED ENV{BOOST_ROOT})
-    message(FATAL_ERROR "Please set the BOOST_ROOT environment variable to the Boost installation directory.\n"
-        "Example: export BOOST_ROOT=/path/to/boost_1_XX_0")
+if (NOT DEFINED ENV{GTEST_INC})
+    message(FATAL_ERROR "Please set the GTEST_INC environment variable to the gtest include directory.\n"
+        "Example: export GTEST_INC=/path/to/gtest/include")
 endif()
-if(NOT DEFINED ENV{BOOST_LIB})
-    message(FATAL_ERROR "Please set the BOOST_LIB environment variable to the Boost library name.\n"
-        "Example: export BOOST_LIB=/path/to/boost/stage/lib")
+if (NOT DEFINED ENV{GTEST_LIB})
+    message(FATAL_ERROR "Please set the GTEST_LIB environment variable to the gtest library directory.\n"
+        "Example: export GTEST_LIB=/path/to/gtest/lib")
 endif()
-set(Boost_NO_SYSTEM_PATHS ON)  # Force CMake to ignore system Boost
-set(Boost_USE_STATIC_LIBS OFF)
-# set(Boost_DEBUG ON)
 
 #------------------------------------------------------------------------------
 # Compiler configuration
@@ -45,11 +42,17 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_executable(database Database.cpp)
 
 #------------------------------------------------------------------------------
-# Boost headers and libraries configuration
+# gtest headers and libraries configuration
 #------------------------------------------------------------------------------
-# Link Boost headers
-target_include_directories(database PRIVATE $ENV{BOOST_ROOT})
-# Link Boost libraries
-# target_link_libraries(a.out PRIVATE
-#     $ENV{BOOST_LIB}/libboost_xxx.a
-# )
+# Link gtest headers
+target_include_directories(database PRIVATE $ENV{GTEST_INC})
+# Link gtest libraries
+target_link_libraries(database PRIVATE
+    $ENV{GTEST_LIB}/libgtest.a
+    $ENV{GTEST_LIB}/libgtest_main.a
+)
+
+# Link pthread libraries (needed for gtest)
+target_link_libraries(database PRIVATE
+    pthread
+)

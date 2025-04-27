@@ -16,7 +16,7 @@
 
 #include <iostream>
 #include <memory>
-#include "boost/di.hpp"
+#include "di.hpp"
 
 
 struct ILogger {

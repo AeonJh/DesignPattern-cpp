@@ -92,7 +92,7 @@ To run the examples in this repository, you'll need:
 
 5. For needed Design Pattern examples, export the dependency include path and libraries path: (optional)
    ```bash
-   export BOOST_ROOT=$PROJECT_ROOT/external/boost/build
+   export BOOST_ROOT=$PROJECT_ROOT/external/boost/build/include
    export BOOST_LIB=$PROJECT_ROOT/external/boost/build/lib
    export GTEST_INC=$PROJECT_ROOT/external/gtest/build/include
    export GTEST_LIB=$PROJECT_ROOT/external/gtest/build/lib
@@ -103,9 +103,14 @@ To run the examples in this repository, you'll need:
    cd Singleton
    cmake -B build -S .
    cmake --build build
-
    # Each pattern's executable is located in the `build/bin` directory.
    ./build/bin/database
+
+   # Or you can compile all the target at the PROJECT_ROOT directory,
+   # then you can find all the executable file in ./build/bin.
+   cd $PROJECT_ROOT
+   cmake -B build -S .
+   cmake --build build
    ```
 
 ## License

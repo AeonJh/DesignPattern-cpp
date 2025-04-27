@@ -92,6 +92,7 @@ To run the examples in this repository, you'll need:
 
 5. For needed Design Pattern examples, export the dependency include path and libraries path: (optional)
    ```bash
+   export BOOST_EXT_ROOT=$PROJECT_ROOT/external/boost-ext
    export BOOST_ROOT=$PROJECT_ROOT/external/boost/build/include
    export BOOST_LIB=$PROJECT_ROOT/external/boost/build/lib
    export GTEST_INC=$PROJECT_ROOT/external/gtest/build/include
@@ -109,8 +110,10 @@ To run the examples in this repository, you'll need:
    # Or you can compile all the target at the PROJECT_ROOT directory,
    # then you can find all the executable file in ./build/bin.
    cd $PROJECT_ROOT
-   cmake -B build -S .
-   cmake --build build
+   ./build.sh
+
+   # When build all the target, you can run the check.sh to test.
+   ./check.sh
    ```
 
 ## License

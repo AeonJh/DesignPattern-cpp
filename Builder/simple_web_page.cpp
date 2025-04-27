@@ -3,6 +3,8 @@
 #include <sstream>
 #include <iostream>
 #include <memory>
+#include <gtest/gtest.h>
+
 
 struct Tag;
 struct HtmlElement;
@@ -98,12 +100,44 @@ struct HtmlBuilder {
     std::string str() const { return root.str(); }
 };
 
-int main() {
+TEST(HtmlBuilderTest, BuildSimpleList) {
     auto html = (*HtmlElement::build("ul"))
                     .add_child("li", "hello")
                     .add_child("li", "world");
-    std::cout << html.str() << std::endl;
-    std::cout << P{IMG{"http://pokemon.com/pikachu.png"}} << std::endl;
+    
+    std::string expected = "<ul>\n"
+                          "  <li>\n"
+                          "    hello\n"
+                          "  </li>\n"
+                          "  <li>\n"
+                          "    world\n"
+                          "  </li>\n"
+                          "</ul>\n";
+    
+    EXPECT_EQ(html.str(), expected);
+}
 
-    return 0;
+TEST(TagTest, SimpleImageTag) {
+    IMG img{"http://pokemon.com/pikachu.png"};
+    std::stringstream ss;
+    ss << img;
+    EXPECT_EQ(ss.str(), "<img src=\"http://pokemon.com/pikachu.png\"></img>");
+}
+
+TEST(TagTest, ParagraphWithImage) {
+    P p{IMG{"http://pokemon.com/pikachu.png"}};
+    std::stringstream ss;
+    ss << p;
+    EXPECT_EQ(ss.str(), "<p><img src=\"http://pokemon.com/pikachu.png\"></img></p>");
+}
+
+TEST(HtmlBuilderTest, EmptyElement) {
+    auto html = (*HtmlElement::build("div"));
+    std::string expected = "<div>\n</div>\n";
+    EXPECT_EQ(html.str(), expected);
+}
+
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

@@ -15,9 +15,9 @@
  */
 
 
-#include <iostream>
 #include <string>
 #include <vector>
+#include <gtest/gtest.h>
 
 
 enum class Color { Red, Green, Blue };
@@ -116,18 +116,105 @@ struct SizeSpecification : Specification<Product> {
     }
 };
 
-int main() {
-    Product apple{"Apple", Color::Green, Size::Small };
-    Product tree {"Tree" , Color::Green, Size::Large };
-    Product house{"House", Color::Blue , Size::Small};
+class ProductFilterTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        // Create some test products
+        apple = new Product{"Apple", Color::Green, Size::Small};
+        tree = new Product{"Tree", Color::Green, Size::Large};
+        house = new Product{"House", Color::Blue, Size::Large};
+        car = new Product{"Car", Color::Red, Size::Medium};
 
-    std::vector<Product*> items{&apple, &tree, &house};
-
-    BetterFilter bf;
-    auto green_and_small_items = bf.filter(items, ColorSpecification(Color::Green) && SizeSpecification(Size::Small));
-
-    for (auto& item : green_and_small_items) {
-        std::cout << item->name << " is \033[32mgreen\033[0m and small\n";
+        items = {apple, tree, house, car};
     }
-    return 0;
+
+    void TearDown() override {
+        delete apple;
+        delete tree;
+        delete house;
+        delete car;
+    }
+
+    Product* apple;
+    Product* tree;
+    Product* house;
+    Product* car;
+    std::vector<Product*> items;
+};
+
+TEST_F(ProductFilterTest, ColorSpecification) {
+    ColorSpecification green(Color::Green);
+    BetterFilter bf;
+
+    auto green_items = bf.filter(items, green);
+
+    ASSERT_EQ(green_items.size(), size_t(2));
+    EXPECT_EQ(green_items[0]->name, "Apple");
+    EXPECT_EQ(green_items[1]->name, "Tree");
+}
+
+TEST_F(ProductFilterTest, SizeSpecification) {
+    SizeSpecification large(Size::Large);
+    BetterFilter bf;
+
+    auto large_items = bf.filter(items, large);
+
+    ASSERT_EQ(large_items.size(), size_t(2));
+    EXPECT_EQ(large_items[0]->name, "Tree");
+    EXPECT_EQ(large_items[1]->name, "House");
+}
+
+TEST_F(ProductFilterTest, AndSpecification) {
+    ColorSpecification green(Color::Green);
+    SizeSpecification large(Size::Large);
+    AndSpecification<Product> green_and_large(green, large);
+    BetterFilter bf;
+
+    auto green_large_items = bf.filter(items, green_and_large);
+
+    ASSERT_EQ(green_large_items.size(), size_t(1));
+    EXPECT_EQ(green_large_items[0]->name, "Tree");
+}
+
+TEST_F(ProductFilterTest, OperatorAndSpecification) {
+    BetterFilter bf;
+    auto green_large_items = bf.filter(items,
+        ColorSpecification(Color::Green) && SizeSpecification(Size::Large));
+
+    ASSERT_EQ(green_large_items.size(), size_t(1));
+    EXPECT_EQ(green_large_items[0]->name, "Tree");
+}
+
+TEST_F(ProductFilterTest, EmptyResults) {
+    ColorSpecification red(Color::Red);
+    SizeSpecification small(Size::Small);
+    AndSpecification<Product> red_and_small(red, small);
+    BetterFilter bf;
+
+    auto red_small_items = bf.filter(items, red_and_small);
+
+    EXPECT_TRUE(red_small_items.empty());
+}
+
+TEST_F(ProductFilterTest, OlderFilterByColor) {
+    OlderProductFilter of;
+    auto green_items = of.filter_by_color(items, Color::Green);
+
+    ASSERT_EQ(green_items.size(), size_t(2));
+    EXPECT_EQ(green_items[0]->name, "Apple");
+    EXPECT_EQ(green_items[1]->name, "Tree");
+}
+
+TEST_F(ProductFilterTest, OlderFilterBySize) {
+    OlderProductFilter of;
+    auto large_items = of.filter_by_size(items, Size::Large);
+
+    ASSERT_EQ(large_items.size(), size_t(2));
+    EXPECT_EQ(large_items[0]->name, "Tree");
+    EXPECT_EQ(large_items[1]->name, "House");
+}
+
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

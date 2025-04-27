@@ -14,8 +14,8 @@
  * @date 2025-04-09
  */
 
-
-#include <iostream>
+#include <sstream>
+#include <gtest/gtest.h>
 
 
 class Rectangle {
@@ -24,6 +24,7 @@ protected:
 public:
     Rectangle(const int width, const int height)
         : width(width), height(height) { };
+    virtual ~Rectangle() = default;
 
     int get_width() const { return width; }
     virtual void set_width(const int width) { this->width = width; }
@@ -71,21 +72,91 @@ void process(Rectangle& r) {
             << ", got: " << r.area() << std::endl;
 }
 
-int main() {
-    Rectangle r(5, 5);
-    process(r);
-    Square s(5);
-    process(s);
-
-    Rectangle* r2 = RectangleFactory::create_rectangle(5, 5);
-    process(*r2);
-    Rectangle* s2 = RectangleFactory::create_square(5);
-    if (RectangleFactory::is_square(s2)) {
-        std::cout << "s2 is a square, do not process" << std::endl;
-    } else {
-        std::cout << "s2 is not a square, process" << std::endl;
-        process(*s2);
+class RectangleTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        oldCoutBuf = std::cout.rdbuf(output.rdbuf());
     }
 
-    return 0;
+    void TearDown() override {
+        std::cout.rdbuf(oldCoutBuf);
+    }
+
+    std::stringstream output;
+    std::streambuf* oldCoutBuf;
+};
+
+TEST_F(RectangleTest, RectangleArea) {
+    Rectangle r(5, 4);
+    EXPECT_EQ(r.area(), 20);
+}
+
+TEST_F(RectangleTest, RectangleDimensions) {
+    Rectangle r(5, 4);
+    EXPECT_EQ(r.get_width(), 5);
+    EXPECT_EQ(r.get_height(), 4);
+}
+
+TEST_F(RectangleTest, RectangleSetDimensions) {
+    Rectangle r(5, 4);
+    r.set_width(3);
+    r.set_height(6);
+    EXPECT_EQ(r.get_width(), 3);
+    EXPECT_EQ(r.get_height(), 6);
+    EXPECT_EQ(r.area(), 18);
+}
+
+TEST_F(RectangleTest, SquareArea) {
+    Square s(5);
+    EXPECT_EQ(s.area(), 25);
+}
+
+TEST_F(RectangleTest, SquareDimensions) {
+    Square s(5);
+    EXPECT_EQ(s.get_width(), 5);
+    EXPECT_EQ(s.get_height(), 5);
+}
+
+TEST_F(RectangleTest, LSPViolationWithSquare) {
+    Square s(5);
+    s.set_width(4);  // Should set both width and height to 4
+    EXPECT_EQ(s.get_width(), 4);
+    EXPECT_EQ(s.get_height(), 4);
+    EXPECT_EQ(s.area(), 16);
+}
+
+TEST_F(RectangleTest, ProcessFunction) {
+    Rectangle r(5, 5);
+    process(r);
+    EXPECT_EQ(output.str(), "Expected area: 50, got: 50\n");
+}
+
+TEST_F(RectangleTest, ProcessFunctionLSPViolation) {
+    Square s(5);
+    process(s);
+    // The expected area should be 50 (5 * 10), but due to LSP violation,
+    // both width and height become 10, resulting in area 100
+    EXPECT_EQ(output.str(), "Expected area: 50, got: 100\n");
+}
+
+TEST_F(RectangleTest, RectangleFactoryCreation) {
+    Rectangle* r = RectangleFactory::create_rectangle(4, 5);
+    EXPECT_EQ(r->get_width(), 4);
+    EXPECT_EQ(r->get_height(), 5);
+    EXPECT_EQ(r->area(), 20);
+    delete r;
+}
+
+TEST_F(RectangleTest, SquareFactoryCreation) {
+    Rectangle* s = RectangleFactory::create_square(5);
+    EXPECT_TRUE(RectangleFactory::is_square(s));
+    EXPECT_EQ(s->get_width(), 5);
+    EXPECT_EQ(s->get_height(), 5);
+    EXPECT_EQ(s->area(), 25);
+    delete s;
+}
+
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

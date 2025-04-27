@@ -2,6 +2,7 @@
 #include <string>
 #include <memory>
 #include "boost/lexical_cast.hpp"
+#include <gtest/gtest.h>
 
 
 struct Logger {
@@ -12,12 +13,10 @@ struct Logger {
 
 struct ConsoleLogger : Logger
 {
-    void info(const std::string& s) override
-    {
+    void info(const std::string& s) override {
         std::cout << "INFO: " << s << std::endl;
     }
-    void warn(const std::string& s) override
-    {
+    void warn(const std::string& s) override {
         std::cout << "WARNNING!!!" << s << std::endl;
     }
 };
@@ -55,10 +54,85 @@ void BankAccount::deposit(int amount) {
                 + boost::lexical_cast<std::string>(balance));
 }
 
-int main() {
+class BankTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        oldCoutBuf = std::cout.rdbuf(output.rdbuf());
+    }
+
+    void TearDown() override {
+        std::cout.rdbuf(oldCoutBuf);
+    }
+
+    std::stringstream output;
+    std::streambuf* oldCoutBuf;
+};
+
+TEST_F(BankTest, DepositWithLogging) {
     auto logger = std::make_shared<ConsoleLogger>();
-    BankAccount account_with_log{ "primary account 1", 1000, logger };
-    BankAccount account_without_log{ "primary account 2", 1000};
-    account_with_log.deposit(2000);
-    account_without_log.deposit(2000); // no crash
+    BankAccount account{"John Doe", 1000, logger};
+
+    account.deposit(500);
+
+    EXPECT_EQ(account.balance, 1500);
+    EXPECT_EQ(output.str(), "INFO: Deposited $500 to John Doe, balance is now $1500\n");
+}
+
+TEST_F(BankTest, DepositWithoutLogging) {
+    BankAccount account{"John Doe", 1000};
+
+    account.deposit(500);
+
+    EXPECT_EQ(account.balance, 1500);
+    EXPECT_EQ(output.str(), ""); // No logging output expected
+}
+
+TEST_F(BankTest, ConsoleLoggerInfo) {
+    auto logger = std::make_shared<ConsoleLogger>();
+    logger->info("Test message");
+
+    EXPECT_EQ(output.str(), "INFO: Test message\n");
+}
+
+TEST_F(BankTest, ConsoleLoggerWarn) {
+    auto logger = std::make_shared<ConsoleLogger>();
+    logger->warn("Warning message");
+
+    EXPECT_EQ(output.str(), "WARNNING!!!Warning message\n");
+}
+
+TEST_F(BankTest, OptionalLoggerWithImpl) {
+    auto consoleLogger = std::make_shared<ConsoleLogger>();
+    auto logger = std::make_shared<OptionalLogger>(consoleLogger);
+
+    logger->info("Test message");
+
+    EXPECT_EQ(output.str(), "INFO: Test message\n");
+}
+
+TEST_F(BankTest, OptionalLoggerWithoutImpl) {
+    auto logger = std::make_shared<OptionalLogger>(nullptr);
+
+    logger->info("Test message");
+    logger->warn("Warning message");
+
+    EXPECT_EQ(output.str(), ""); // No output expected
+}
+
+TEST_F(BankTest, MultipleBankAccounts) {
+    auto logger = std::make_shared<ConsoleLogger>();
+    BankAccount account1{"John Doe", 1000, logger};
+    BankAccount account2{"Jane Doe", 2000}; // No logger
+
+    account1.deposit(500);
+    account2.deposit(1000);
+
+    EXPECT_EQ(account1.balance, 1500);
+    EXPECT_EQ(account2.balance, 3000);
+    EXPECT_EQ(output.str(), "INFO: Deposited $500 to John Doe, balance is now $1500\n");
+}
+
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

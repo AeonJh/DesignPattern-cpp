@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <gtest/gtest.h>
 
 
 class Person;
@@ -24,6 +25,14 @@ class Person {
 
 public:
     static PersonBuilder create();
+
+    // Getter methods for gtest
+    const std::string_view get_street_address() const { return street_address; }
+    const std::string_view get_post_code() const { return post_code; }
+    const std::string_view get_city() const { return city; }
+    const std::string_view get_company_name() const { return company_name; }
+    const std::string_view get_position() const { return position; }
+    int get_annual_income() const { return annual_income; }
 };
 
 class PersonBuilderBase {
@@ -108,17 +117,67 @@ std::ostream& operator<<(std::ostream& os, const Person& p) {
     return os;
 }
 
-int main() {
+TEST(PersonBuilderTest, BuildPersonWithAddressAndJob) {
     Person p = Person::create()
                 .lives()
-                .at("123 London Road")
-                .with_postcode("SW1 1GB")
-                .in("London")
+                    .at("123 Test St")
+                    .with_postcode("12345")
+                    .in("Test City")
                 .works()
-                .at("PragmaSoft")
-                .as_a("Consultant")
-                .earning(10e6);
+                    .at("Test Company")
+                    .as_a("Developer")
+                    .earning(100000);
 
-    std::cout << p << std::endl;
-    return 0;
+    EXPECT_EQ(p.get_street_address(), "123 Test St");
+    EXPECT_EQ(p.get_post_code(), "12345");
+    EXPECT_EQ(p.get_city(), "Test City");
+    EXPECT_EQ(p.get_company_name(), "Test Company");
+    EXPECT_EQ(p.get_position(), "Developer");
+    EXPECT_EQ(p.get_annual_income(), 100000);
+}
+
+TEST(PersonBuilderTest, BuildPersonWithOnlyAddress) {
+    Person p = Person::create()
+                .lives()
+                    .at("456 Test Ave")
+                    .with_postcode("67890")
+                    .in("Another City");
+
+    EXPECT_EQ(p.get_street_address(), "456 Test Ave");
+    EXPECT_EQ(p.get_post_code(), "67890");
+    EXPECT_EQ(p.get_city(), "Another City");
+    EXPECT_EQ(p.get_company_name(), "");
+    EXPECT_EQ(p.get_position(), "");
+    EXPECT_EQ(p.get_annual_income(), 0);
+}
+
+TEST(PersonBuilderTest, BuildPersonWithOnlyJob) {
+    Person p = Person::create()
+                .works()
+                    .at("Another Company")
+                    .as_a("Manager")
+                    .earning(150000);
+
+    EXPECT_EQ(p.get_street_address(), "");
+    EXPECT_EQ(p.get_post_code(), "");
+    EXPECT_EQ(p.get_city(), "");
+    EXPECT_EQ(p.get_company_name(), "Another Company");
+    EXPECT_EQ(p.get_position(), "Manager");
+    EXPECT_EQ(p.get_annual_income(), 150000);
+}
+
+TEST(PersonBuilderTest, BuildEmptyPerson) {
+    Person p = Person::create();
+
+    EXPECT_EQ(p.get_street_address(), "");
+    EXPECT_EQ(p.get_post_code(), "");
+    EXPECT_EQ(p.get_city(), "");
+    EXPECT_EQ(p.get_company_name(), "");
+    EXPECT_EQ(p.get_position(), "");
+    EXPECT_EQ(p.get_annual_income(), 0);
+}
+
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

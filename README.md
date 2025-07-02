@@ -44,7 +44,7 @@ Here are the categories of design patterns implemented:
 - [x] Null Object
 - [ ] Observer
 - [ ] State
-- [ ] Strategy
+- [x] Strategy
 - [ ] Template Method
 - [ ] Visitor
 

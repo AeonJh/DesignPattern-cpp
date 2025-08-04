@@ -26,7 +26,7 @@ Here are the categories of design patterns implemented:
 - [x] Prototype
 
 ### Structural Patterns
-- [ ] Adapter
+- [x] Adapter
 - [ ] Bridge
 - [ ] Composite
 - [ ] Decorator

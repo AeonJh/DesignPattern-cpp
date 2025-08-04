@@ -17,6 +17,7 @@ foreach(dir ${SOLID_DIRS})
     endif()
 endforeach()
 
+add_subdirectory(Adapter)
 add_subdirectory(Builder)
 add_subdirectory(Factory)
 add_subdirectory(Mediator)
